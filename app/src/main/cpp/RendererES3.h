@@ -38,8 +38,10 @@ public:
     virtual ~Renderer();
     void resize(int w, int h);
     void render();
+    void present();
     void setMouseDelta(float dx, float dy) { mMouseDeltaX = dx; mMouseDeltaY = dy; }
-
+    void setCubeColor(float r, float g, float b) { mR = r; mG = g; mB = b;}
+    void setCubeSize(float size) { mSize = size; }
 protected:
     Renderer();
 
@@ -47,9 +49,9 @@ protected:
     bool initSurface(ANativeWindow* nativeWindow);
     float mMouseDeltaX, mMouseDeltaY;
     float mMouseX, mMouseY;
-
+public:
     int mWidth, mHeight;
-
+protected:
     EGLDisplay mEglDisplay;
     EGLSurface mEglSurface;
     EGLContext mEglContext;
@@ -58,7 +60,8 @@ protected:
     GLuint mProgram;
     GLuint fsVA;
     GLuint mGLFullScreenVertexArrayName;
-
+    float mR, mG, mB;
+    float mSize;
     friend Renderer* createES3Renderer(ANativeWindow* nativeWindow);
 };
 

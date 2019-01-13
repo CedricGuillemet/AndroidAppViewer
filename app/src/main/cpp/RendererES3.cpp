@@ -20,7 +20,9 @@ static const char FRAGMENT_SHADER[] =
     "#version 300 es\n"
     "precision mediump float;\n"
     "uniform vec2 rotation;"
+    "uniform vec3 color;"
     "uniform float ratio;"
+    "uniform float size;"
     "in vec4 vUV;\n"
     "out vec4 outColor;\n"
     "mat3 xrot(float t){ return mat3(1.0, 0.0, 0.0, 0.0, cos(t), -sin(t), 0.0, sin(t), cos(t));}"
@@ -30,8 +32,8 @@ static const char FRAGMENT_SHADER[] =
     "mat3 rtMat = yrot(rotation.y) * xrot(rotation.x);"
     "float g;"
     "for(int f=0;f<10;++f)"
-    "    m+=(g=length(max(i=abs(rtMat*(r+=v*g))-vec3(.4),0.))-.1)<.01?.3:0.;"
-    "outColor = vec4(m,1.0);\n"
+    "    m+=(g=length(max(i=abs(rtMat*(r+=v*g))-vec3(.4)*size,0.))-.1)<.01?.3:0.;"
+    "outColor = vec4(m * color,1.0);\n"
     "}\n";
 
 
@@ -121,11 +123,6 @@ GLuint createProgram(const char* vtxSrc, const char* fragSrc) {
     return program;
 }
 
-static void printGlString(const char* name, GLenum s) {
-    const char* v = (const char*)glGetString(s);
-    ALOGV("GL %s: %s\n", name, v);
-}
-
 class RendererES3: public Renderer {
 public:
     RendererES3();
@@ -157,6 +154,10 @@ Renderer::Renderer() : mMouseDeltaX(0)
         , mProgram(0)
         , fsVA(0)
         , mGLFullScreenVertexArrayName(0)
+        , mR(1.f)
+        , mG(1.f)
+        , mB(1.f)
+        , mSize(1.f)
 {
 }
 
@@ -259,8 +260,7 @@ void Renderer::resize(int w, int h)
     glViewport(0, 0, w, h);
 }
 
-void Renderer::render()
-{
+void Renderer::render() {
     // whole screen is rendered. no need to erase it
     //glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
     glClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT);
@@ -271,13 +271,16 @@ void Renderer::render()
     mMouseDeltaY *= 0.9f;
 
     glUseProgram(mProgram);
-    glUniform2f(glGetUniformLocation(mProgram, "rotation"), -mMouseY*0.02f, mMouseX*0.02f);
-    glUniform1f(glGetUniformLocation(mProgram, "ratio"), float(mWidth)/float(mHeight));
+    glUniform2f(glGetUniformLocation(mProgram, "rotation"), -mMouseY * 0.02f, mMouseX * 0.02f);
+    glUniform1f(glGetUniformLocation(mProgram, "ratio"), float(mWidth) / float(mHeight));
+    glUniform1f(glGetUniformLocation(mProgram, "size"), mSize);
+    glUniform3fv(glGetUniformLocation(mProgram, "color"), 1, &mR);
     glBindVertexArray(mGLFullScreenVertexArrayName);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
 
     checkGlError("Renderer::render");
-
+}
+void Renderer::present() {
     eglSwapBuffers(mEglDisplay, mEglSurface);
 }

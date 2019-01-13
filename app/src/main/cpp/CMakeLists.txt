@@ -36,7 +36,14 @@ endif (${ANDROID_PLATFORM_LEVEL} LESS 12)
 add_library(rendererJNI SHARED
             ${GL3STUB_SRC}
             RendererJNI.cpp
-            RendererES3.cpp)
+            RendererES3.cpp
+            lz4/lz4.c
+            lz4/lz4frame.c
+            lz4/lz4hc.c
+            lz4/xxhash.c
+            webby/webby.c
+            imgui/imgui.cpp
+            imgui/imgui_draw.cpp)
 
 # Include libraries needed for gles3jni lib
 target_link_libraries(rendererJNI
