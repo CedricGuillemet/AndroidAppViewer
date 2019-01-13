@@ -43,7 +43,8 @@ add_library(rendererJNI SHARED
             lz4/xxhash.c
             webby/webby.c
             imgui/imgui.cpp
-            imgui/imgui_draw.cpp)
+            imgui/imgui_draw.cpp
+            imgui/imgui_widgets.cpp)
 
 # Include libraries needed for gles3jni lib
 target_link_libraries(rendererJNI

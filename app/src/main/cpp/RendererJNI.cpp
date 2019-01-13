@@ -46,37 +46,19 @@ void LoadFontsTexture()
 
 void InitImGui()
 {
-    ImGuiIO& io = ImGui::GetIO();
-    io.DeltaTime = 1.0f/60.0f;                                    // Time elapsed since last frame, in seconds (in this sample app we'll override this every frame because our time step is variable)
-/*    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;                       // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-    io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = GLFW_KEY_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = GLFW_KEY_DOWN;
-    io.KeyMap[ImGuiKey_Home] = GLFW_KEY_HOME;
-    io.KeyMap[ImGuiKey_End] = GLFW_KEY_END;
-    io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
-    io.KeyMap[ImGuiKey_Enter] = GLFW_KEY_ENTER;
-    io.KeyMap[ImGuiKey_Escape] = GLFW_KEY_ESCAPE;
-    io.KeyMap[ImGuiKey_A] = GLFW_KEY_A;
-    io.KeyMap[ImGuiKey_C] = GLFW_KEY_C;
-    io.KeyMap[ImGuiKey_V] = GLFW_KEY_V;
-    io.KeyMap[ImGuiKey_X] = GLFW_KEY_X;
-    io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
-    io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
-*/
-    io.RenderDrawListsFn = ImImpl_RenderDrawLists;
-//    io.SetClipboardTextFn = ImImpl_SetClipboardTextFn;
-//    io.GetClipboardTextFn = ImImpl_GetClipboardTextFn;
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-//    LoadFontsTexture();
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
 
-    // @RemoteImgui begin
+    // hard coded ellapsed time...well...
+    io.DeltaTime = 1.0f/60.0f;
+
     ImGui::RemoteInit("0.0.0.0", 7002); // local host, local port
-    //ImGui::GetStyle().WindowRounding = 0.f; // no rounding uses less bandwidth
+    ImGui::GetStyle().WindowRounding = 0.f; // no rounding uses less bandwidth
     io.DisplaySize = ImVec2((float)VCANVAS_WIDTH, (float)VCANVAS_HEIGHT);
-    // @RemoteImgui end
 }
 
 void UpdateImGui(int w, int h)
@@ -84,7 +66,8 @@ void UpdateImGui(int w, int h)
     ImGuiIO& io = ImGui::GetIO();
     // Setup resolution (every frame to accommodate for window resizing)
 
-    io.DisplaySize = ImVec2((float)w, (float)h);                                   // Display size, in pixels. For clamping windows positions.
+    // Display size, in pixels. For clamping windows positions.
+    io.DisplaySize = ImVec2((float)w, (float)h);
 
     // @RemoteImgui begin
     ImGui::RemoteUpdate();
@@ -157,9 +140,10 @@ Java_com_android_appviewer_AndroidViewAppActivity_step(JNIEnv* env, jobject obj)
     if (g_renderer) {
         UpdateImGui(g_renderer->mWidth, g_renderer->mHeight);
         g_renderer->render();
-        bool show_another_window = true;
-        ImGui::Begin("Another Window", &show_another_window, ImVec2(200,100));
-        ImGui::Text("Hello");
+        ImGui::Begin("DebugWindow");
+        ImGui::Text("Hello world!");
+        ImGui::Text("Current display resolution is %d x %d", g_renderer->mWidth, g_renderer->mHeight);
+        ImGui::Text("Current rotation is %5.2f x %5.2f", g_renderer->mMouseX, g_renderer->mMouseY);
         static float col[3] = {1.f, 1.f, 1.f};
         static float size = 1.f;
         if (ImGui::ColorEdit3("Cube Color", col))
@@ -169,6 +153,7 @@ Java_com_android_appviewer_AndroidViewAppActivity_step(JNIEnv* env, jobject obj)
         ImGui::End();
 
         ImGui::Render();
+        ImImpl_RenderDrawLists(ImGui::GetDrawData());
         g_renderer->present();
     }
 }

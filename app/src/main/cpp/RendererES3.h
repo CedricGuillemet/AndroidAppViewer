@@ -48,8 +48,9 @@ protected:
     bool init();
     bool initSurface(ANativeWindow* nativeWindow);
     float mMouseDeltaX, mMouseDeltaY;
-    float mMouseX, mMouseY;
+
 public:
+    float mMouseX, mMouseY;
     int mWidth, mHeight;
 protected:
     EGLDisplay mEglDisplay;
