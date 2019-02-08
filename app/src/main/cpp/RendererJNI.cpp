@@ -5,6 +5,7 @@
 #include <android/native_window.h> // requires ndk r5 or newer
 #include <android/native_window_jni.h> // requires ndk r5 or newer
 #include "RendererES3.h"
+#include <string>
 
 #include "imgui/imgui.h"
 #include "imgui_remote.h"
@@ -134,6 +135,37 @@ Java_com_android_appviewer_AndroidViewAppActivity_resize(JNIEnv* env, jobject ob
         g_renderer->resize(width, height);
     }
 }
+#include <dirent.h>
+
+std::string FileBrowse()
+{
+    std::string ret;
+    static char filePath[1024] = {"/data/local/tmp/"};
+    ImGui::InputText("Path", filePath, 1024);
+    ImGui::BeginChild("List");
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(filePath)) != NULL)
+    {
+        while ((ent = readdir(dir)) != NULL)
+        {
+            bool dir = ent->d_type == DT_DIR;
+            ImGui::PushStyleColor(ImGuiCol_Text, dir?0xFFFF3030:0xFFFFFFFF);
+            if (ImGui::Selectable(ent->d_name))
+            {
+                strcat(filePath, ent->d_name);
+                if (dir)
+                    strcat(filePath, "/");
+                else
+                    ret = filePath;
+            }
+            ImGui::PopStyleColor();
+        }
+        closedir(dir);
+    }
+    ImGui::EndChild();
+    return ret;
+}
 
 JNIEXPORT void JNICALL
 Java_com_android_appviewer_AndroidViewAppActivity_step(JNIEnv* env, jobject obj) {
@@ -152,6 +184,19 @@ Java_com_android_appviewer_AndroidViewAppActivity_step(JNIEnv* env, jobject obj)
             g_renderer->setCubeSize(size);
         ImGui::End();
 
+
+
+        ImGui::Begin("FileBrowse");
+        static std::string currentFile;
+        ImGui::Text("Current File : %s", currentFile.c_str());
+        ImGui::Separator();
+        std::string filePath = FileBrowse();
+        if (!filePath.empty())
+        {
+            currentFile = filePath;
+        }
+
+        ImGui::End();
         ImGui::Render();
         ImImpl_RenderDrawLists(ImGui::GetDrawData());
         g_renderer->present();
