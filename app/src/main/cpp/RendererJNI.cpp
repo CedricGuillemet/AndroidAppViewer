@@ -41,6 +41,13 @@ Java_com_android_appviewer_AndroidViewAppActivity_step(JNIEnv* env, jobject obj)
 JNIEXPORT void JNICALL
 Java_com_android_appviewer_AndroidViewAppActivity_setMouseDelta(JNIEnv* env, jobject obj, jfloat dx, jfloat dy) {
     if (g_renderer) {
+        float maxv = 2.f;
+        if (dx < -maxv) dx = -maxv;
+        if (dx > maxv) dx = maxv;
+
+        if (dy < -maxv) dy = -maxv;
+        if (dy > maxv) dy = maxv;
+
         g_renderer->setMouseDelta(dx, dy);
     }
 }

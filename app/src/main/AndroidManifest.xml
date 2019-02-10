@@ -25,11 +25,14 @@
     <activity android:name="AndroidViewAppActivity"
               android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
               android:launchMode="singleTask"
-              android:configChanges="orientation|keyboardHidden">
+              android:configChanges="orientation|keyboardHidden"
+        android:screenOrientation="landscape">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
   </application>
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 </manifest>

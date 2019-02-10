@@ -13,26 +13,63 @@ static const char VERTEX_SHADER[] =
     "out vec4 vUV;\n"
     "void main() {\n"
     "gl_Position = vec4(inUV.xy*2.0-1.0,0.5,1.0);"
-    "vUV = vec4(inUV*2.0-1.0, 0., 0.);"
+    "vUV = vec4(inUV, 0., 0.);"
     "}\n";
 
 static const char FRAGMENT_SHADER[] =
     "#version 300 es\n"
     "precision mediump float;\n"
     "uniform vec2 rotation;"
-    "uniform float ratio;"
     "in vec4 vUV;\n"
     "out vec4 outColor;\n"
-    "mat3 xrot(float t){ return mat3(1.0, 0.0, 0.0, 0.0, cos(t), -sin(t), 0.0, sin(t), cos(t));}"
-    "mat3 yrot(float t){ return mat3(cos(t), 0.0, -sin(t), 0.0, 1.0, 0.0, sin(t), 0.0, cos(t));}"
-    "void main() {\n"
-    "vec3 m,v=normalize(vec3(vUV.x * ratio, vUV.y,1)),r=vec3(0,0,-1.5),o,i;"
-    "mat3 rtMat = yrot(rotation.y) * xrot(rotation.x);"
-    "float g;"
-    "for(int f=0;f<10;++f)"
-    "    m+=(g=length(max(i=abs(rtMat*(r+=v*g))-vec3(.4),0.))-.1)<.01?.3:0.;"
-    "outColor = vec4(m,1.0);\n"
-    "}\n";
+"#define MAX_RAYMARCH_ITER 32\n"
+"#define MIN_RAYMARCH_DELTA 0.01\n"
+"float map(vec3 p) {"
+"    float d = length(p) - 0.3;"
+"    d = min(d, length(p-vec3(0.6, -0.4, 0.)) - 0.45);"
+"    d = min(d, length(p-vec3(-0.4, 0.4, -0.2)) - 0.65);"
+"    d = min(d, length(p-vec3(-0.3, -0.8, 0.)) - 0.3);"
+"    d = min(d, length(p-vec3(0.7, 0.8, 0.)) - 0.4);"
+"    d = min(d, p.z-0.);"
+"d = min(d, p.x+1.0);"
+"d = min(d, -p.x+1.0);"
+"d = min(d, p.y+1.0);"
+"d = min(d, -p.y+1.0);"
+
+"    return d;"
+"}"
+"float raymarch(vec3 ray_start, vec3 ray_dir){"
+"    float dist = 0.0;"
+"    for (int i = 0; i <= MAX_RAYMARCH_ITER; i++)"
+"    {"
+"        vec3 p = ray_start + ray_dir * dist;"
+"        float d = map(p);"
+"        if (d < MIN_RAYMARCH_DELTA)"
+"        {"
+"           return dist;"
+"        }"
+"        dist += d;"
+"    }"
+"    return -1.;"
+"}"
+"void main() {"
+"    vec2 uv = vUV.xy;"
+"    vec2 ng = rotation;"
+"    vec3 offset = vec3(ng.xy, -length(ng)*0.1) * 2.;"
+"    vec3 camPos = vec3(0., 0., 1.5) + offset;"
+"    vec3 camTarget = vec3((uv-0.5) *2.0, 0.49);"
+"    vec3 camDir = normalize(camTarget - camPos);"
+"    float d = raymarch(camPos, camDir);"
+"    vec3 cl = camPos + camDir * d;"
+"    vec3 p1 = floor(cl * vec3(2.));"
+"    vec3 p2 = floor(cl * vec3(4.));"
+"    vec3 p3 = floor(cl * vec3(8.));"
+"    vec3 col = vec3(mod((p1.x + p1.y + p1.z), 2.) * (cl.z*2. +0.3 ) + 0.1);"
+"    col += vec3(abs(mod((p2.x + p2.y + p2.z), 2.) * 0.04));"
+"    col += vec3(abs(mod((p3.x + p3.y + p3.z), 2.) * 0.02));"
+"    outColor = vec4(col,1.0);"
+//"outColor = vec4(1.0,0.0,1.0,1.0);"
+"}\n";
 
 
 bool checkGlError(const char* funcName) {
@@ -271,7 +308,7 @@ void Renderer::render()
     mMouseDeltaY *= 0.9f;
 
     glUseProgram(mProgram);
-    glUniform2f(glGetUniformLocation(mProgram, "rotation"), -mMouseY*0.02f, mMouseX*0.02f);
+    glUniform2f(glGetUniformLocation(mProgram, "rotation"), -mMouseDeltaY*0.2f, mMouseDeltaX*0.2f);
     glUniform1f(glGetUniformLocation(mProgram, "ratio"), float(mWidth)/float(mHeight));
     glBindVertexArray(mGLFullScreenVertexArrayName);
     glDrawArrays(GL_TRIANGLES, 0, 3);
